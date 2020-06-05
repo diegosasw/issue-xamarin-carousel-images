@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
+using QRCoder;
 using Xamarin.Forms;
 
 namespace App265
@@ -18,11 +16,11 @@ namespace App265
         {
             InitializeComponent();
 
-            BindingContext = new model();
+            BindingContext = new Model();
         }
     }
 
-    public class model : INotifyPropertyChanged
+    public class Model : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -40,14 +38,34 @@ namespace App265
             }
         }
 
-        public ObservableCollection<ImageSource> _images { get; private set; }
+        private ObservableCollection<ImageSource> _images = new ObservableCollection<ImageSource>();
 
-        public model() {
+        public Model() {
 
             Images = new ObservableCollection<ImageSource>();
-            Images.Add(ImageSource.FromFile("logo.jpg"));
-            Images.Add(ImageSource.FromFile("sample.jpg"));
-            Images.Add(ImageSource.FromFile("ttt.png"));
+
+            var imageOne = GetQrImageAsBytes();
+            var imageTwo = GetQrImageAsBytes();
+            var imageThree = GetQrImageAsBytes();
+
+            // This works
+            //Images.Add(ImageSource.FromFile("logo.jpg"));
+            //Images.Add(ImageSource.FromFile("sample.jpg"));
+            //Images.Add(ImageSource.FromFile("ttt.png"));
+
+            Images.Add(ImageSource.FromStream(() => new MemoryStream(imageOne)));
+            Images.Add(ImageSource.FromStream(() => new MemoryStream(imageTwo)));
+            Images.Add(ImageSource.FromStream(() => new MemoryStream(imageThree)));
+        }
+
+        private byte[] GetQrImageAsBytes()
+        {
+            var randomText = Guid.NewGuid().ToString();
+            var qrGenerator = new QRCodeGenerator();
+            var qrCodeData = qrGenerator.CreateQrCode(randomText, QRCodeGenerator.ECCLevel.L);
+            var qRCode = new PngByteQRCode(qrCodeData);
+            var qrCodeBytes = qRCode.GetGraphic(20);
+            return qrCodeBytes;
         }
     }
 }
